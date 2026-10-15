@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+src/human_randomness/__init__.py
+src/human_randomness/cli.py
+src/human_randomness/evaluation.py
+src/human_randomness/model.py
+src/human_randomness/storage.py
+src/human_randomness_predictor.egg-info/PKG-INFO
+src/human_randomness_predictor.egg-info/SOURCES.txt
+src/human_randomness_predictor.egg-info/dependency_links.txt
+src/human_randomness_predictor.egg-info/entry_points.txt
+src/human_randomness_predictor.egg-info/requires.txt
+src/human_randomness_predictor.egg-info/top_level.txt
+tests/test_cli.py
+tests/test_model.py

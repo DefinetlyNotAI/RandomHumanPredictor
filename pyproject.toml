@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "human-randomness-predictor"
+version = "1.1.0"
+description = "Online probabilistic modeling of a person's supposedly random integer selections"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["rich>=13.7,<16"]
+license = {text = "MIT"}
+authors = [{name = "Project contributors"}]
+keywords = ["prediction", "online-learning", "behavior", "probability", "human-randomness"]
+
+[project.scripts]
+hrp = "human_randomness.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

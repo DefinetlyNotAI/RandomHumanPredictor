@@ -1,0 +1,2 @@
+[console_scripts]
+hrp = human_randomness.cli:main

@@ -1,0 +1,105 @@
+# Human Randomness Predictor
+
+An offline, personalized, online-learning experiment that attempts to predict a person's next self-chosen integer in the inclusive range **0 to 100**.
+
+It learns from successive choices. It does **not** assume that it can predict genuinely random numbers. Its probabilities and accuracy are empirical, not guarantees.
+
+## Quick start
+
+Requires Python 3.10+. Requires **Rich** for the terminal interface, installed automatically with the package.
+
+### Windows PowerShell
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m human_randomness.cli play --profile me
+```
+
+Alternatively, after activating the environment with `.\.venv\Scripts\Activate.ps1`, run `hrp play --profile me`.
+
+### Linux/macOS
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e .
+.venv/bin/hrp play --profile me
+```
+
+The launcher is `hrp` after installation. You can also run `python -m human_randomness.cli` from the environment.
+
+## Commands
+
+```text
+hrp play --profile alice                Interactive hidden prediction game
+hrp play --profile alice --show-predictions
+hrp play --profile alice --show-proof     Display full SHA-256 verification every round
+hrp stats --profile alice               Chronological replay metrics
+hrp stats --profile alice --json        Machine-readable metrics
+hrp import choices.txt --profile alice  Import number history
+hrp --home path/to/data play --profile alice
+```
+
+For import, `choices.txt` may contain one integer per line or integers separated by commas / whitespace. All numbers must be between 0 and 100. An import is appended to the existing profile.
+
+## A fair experiment
+
+In the default interactive mode, you don't see the prediction until **after** you have entered your next number. A SHA-256 commitment is created before the answer and saved with its reveal data afterward. By default, the interface keeps the proof out of the way. Pass `--show-proof` to print the commitment before answering and the verification recipe afterward. You can recompute the digest to confirm the stated guess was fixed before you answered. This prevents the program from silently changing its guess after seeing the answer, but it cannot prove your choice was made independently. If you enable `--show-predictions`, your behavior may change in response to the guess.
+
+Keep one person's choices under one profile. Start with at least 100 to 500 rounds before drawing strong conclusions. Try not to use a physical RNG as the source of the choices if the goal is to model human decision patterns.
+
+## Model
+
+A **probability mixture** combines seven small experts, all emitting a full 101-value probability distribution:
+
+1. Uniform baseline (uninformed fallback)
+2. Smoothed personal frequencies
+3. Exponentially decayed recent frequencies
+4. Last digit and tens-group preferences
+5. Markov-like transitions conditioned on previous selections
+6. Jump-size preferences
+7. Avoidance of recently selected values
+
+Each expert's weight adapts using the log probability it assigned to the next observed choice. A gentle weight decay permits adjustment if a person's habits change. The top prediction is the maximum-probability number, not a random sample. All experts are smoothed to avoid claiming zero probability for any choice.
+
+This is a compact heuristic online ensemble, **not** a pretrained neural network. Individual experts can be weak or redundant. Large observational improvements would need replication on held-out sequences to establish reliability.
+
+## Evaluation
+
+`hrp stats` **replays choices in order**, always predicting before training on the next one. It reports exact-guess (top-1), top-5, top-10, and mean negative log likelihood (log loss). Lower log loss is better.
+
+For a **uniformly random** choice across 101 integers, useful reference points are:
+
+| Metric | Uniform baseline |
+|---|---:|
+| Exact guess | 1 / 101 ≈ 0.990% |
+| Top five | 5 / 101 ≈ 4.950% |
+| Top ten | 10 / 101 ≈ 9.901% |
+| Log loss | ln(101) ≈ 4.615 |
+
+The first rounds are cold-start guesses, so small datasets will be noisy. Track log loss as well as hit rates, since exact-match accuracy alone discards information about predicted probabilities. When imported data lacks saved historical predictions, `stats` reconstructs them correctly by chronological replay.
+
+## Data and privacy
+
+Profiles persist locally as JSON in `~/.human-randomness/<profile>.json`, unless `HRP_HOME` or `--home` overrides it. Each interactive choice is stored with its revealed guess, top-five guesses, SHA-256 commitment and nonce. Imported choices store only the actual integer. No telemetry, service, API key, network access, or user registration is required.
+
+The file is not encrypted. It is intended for local experimentation, not confidential data collection. Use different profiles for different people or protocols.
+
+## Testing
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install pytest
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+## Limitations
+
+- A person deliberately selecting uniform random numbers may be no more predictable than the 1/101 exact-guess baseline.
+- Training and benchmarking on very few samples is unreliable.
+- Preferences change with instructions, previous feedback, and situational cues.
+- The model does not presently include calendar context, response latency, demographics, or a neural network.
+- `stats` replays the full history, so very large datasets may take longer to analyze.
+
+## License
+
+MIT. See `LICENSE`.
